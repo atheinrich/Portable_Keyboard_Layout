@@ -8,7 +8,7 @@
 # Imports
 import keyboard                                # Key replacement
 import tkinter as tk                           # Image management
-from PIL import Image, ImageTk                 # Image management
+from PIL import Image, ImageTk                 # Image management; pillow
 import os                                      # Image management
 import ctypes                                  # Image management
 import importlib.util                          # Image management
@@ -243,26 +243,33 @@ def toggle_layout(event):
             if replace: show_window()
             else:       root.withdraw()
 
-def key_replacement(event):
-    """ Handles replacement and switches between variants for the current layout. """
+def toggle_state(event):
+    """ Switches between variants for the current layout. """
     global layout_state
+
+    key = event.name.lower()
+    
+    # Handle shift toggling
+    new_state = None
+    if (key == 'shift')   and (layout_state == 0): new_state = 1 # Queue shift
+    elif (key != 'shift') and (layout_state == 1): new_state = 2 # Note that shift has been used
+    elif (key == 'shift') and (layout_state == 2): new_state = 3
+    elif (key == 'shift') and (layout_state == 3): new_state = 0 # Check when shift is lifted
+    elif (key == 'shift') and (event.event_type == "up"): new_state = 0
+    if (new_state != layout_state) and (new_state is not None):
+        layout_state = new_state
+        show_window()
+
+def key_replacement(event):
+    """ Handles replacement. """
     
     if replace:
-        key = event.name.lower()
-        
-        # Handle shift toggling
-        new_state = None
-        if (key == 'shift')   and (layout_state == 0): new_state = 1 # Queue shift
-        elif (key != 'shift') and (layout_state == 1): new_state = 2 # Note that shift has been used
-        elif (key == 'shift') and (layout_state == 2): new_state = 3
-        elif (key == 'shift') and (layout_state == 3): new_state = 0 # Check when shift is lifted
-        elif (key == 'shift') and (event.event_type == "up"): new_state = 0
-        if (new_state != layout_state) and (new_state is not None):
-            layout_state = new_state
-            show_window()
-        print(layout_state, key)
+
+        # Check if shift is held
+        toggle_state(event)
         
         # Check for input
+        key = event.name.lower()
         if event.event_type == 'down':
             
             # Set layout
