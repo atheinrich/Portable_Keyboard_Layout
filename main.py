@@ -11,7 +11,6 @@ import tkinter as tk                           # Image management
 from PIL import Image, ImageTk                 # Image management; pillow
 import os                                      # Image management
 import ctypes                                  # Image management
-import importlib.util                          # Image management
 import sys                                     # Executable
 import traceback                               # Debugging
 
@@ -30,8 +29,6 @@ position_top  = False                          # Location of window
 replace        = False                         # Turns app on/off
 current_layout = 0                             # Notes current layout; alphanumeric order of Layout folders
 layout_state   = 0                             # Notes current variant; order of [0Norm, 1Sh]
-
-layout_states = ["0Norm", "1Sh"]
 
 ##########################################################################################################
 # Data
@@ -202,9 +199,9 @@ def show_window():
     """ Loads image and displays it in a window. """
     
     # Import layout image
-    if layout_state: state = 1
-    else:            state = 0
-    img   = layouts[current_layout].images[layout_states[state]]
+    if layout_state: state = layouts[0].vars[1]
+    else:            state = layouts[0].vars[0]
+    img   = layouts[current_layout].images[state]
     photo = ImageTk.PhotoImage(img)
     
     # Apply image to window
@@ -248,14 +245,14 @@ def toggle_state(event):
     global layout_state
 
     key = event.name.lower()
-    
-    # Handle shift toggling
     new_state = None
+
     if (key == 'shift')   and (layout_state == 0): new_state = 1 # Queue shift
     elif (key != 'shift') and (layout_state == 1): new_state = 2 # Note that shift has been used
     elif (key == 'shift') and (layout_state == 2): new_state = 3
     elif (key == 'shift') and (layout_state == 3): new_state = 0 # Check when shift is lifted
-    elif (key == 'shift') and (event.event_type == "up"): new_state = 0
+    elif (key == 'shift') and (event.event_type == "up"): new_state = 0 # Handle independent presses
+
     if (new_state != layout_state) and (new_state is not None):
         layout_state = new_state
         show_window()
