@@ -5,6 +5,10 @@
 ##########################################################################################################
 
 ##########################################################################################################
+# User settings
+taskbar_icon = False
+
+##########################################################################################################
 # Imports
 import keyboard                                # Key replacement
 import tkinter as tk                           # Image management
@@ -13,6 +17,8 @@ import os                                      # Image management
 import ctypes                                  # Image management
 import sys                                     # Executable
 import traceback                               # Debugging
+import threading                               # Taskbar icon
+import pystray                                 # Taskbar icon
 
 ##########################################################################################################
 # Parameters
@@ -32,7 +38,7 @@ layout_state   = 0                             # Notes current variant; order of
 
 ##########################################################################################################
 # Data
-def _find_paths():
+def _find_paths(return_all=False):
     """ Returns the directory path for each layout folder in /root/Layouts. """
     
     def resource_path(relative_path):
@@ -41,13 +47,15 @@ def _find_paths():
         base_path = os.path.dirname(os.path.abspath(__file__))
         return os.path.join(base_path, relative_path)
     layouts_path = resource_path("layouts")
+    utility_path = resource_path("utility")
 
-    paths = []
+    layout_paths = []
     for directory in os.listdir(layouts_path):
         path = os.path.join(layouts_path, directory)
-        if os.path.isdir(path): paths.append(path)
+        if os.path.isdir(path): layout_paths.append(path)
     
-    return paths
+    if return_all: return root, utility_path, layouts_path, layout_paths
+    else:          return layout_paths
 
 class Layout:
     """ Represents one layout folder. Processes replacement dictionaries and images. """
@@ -220,6 +228,35 @@ def raise_window():
     root.after(1000, raise_window)
 
 ##########################################################################################################
+# Icon
+def create_icon(file="off"):
+    _, utility_path, _, _ = _find_paths(return_all=True)
+    path = os.path.join(utility_path, file + ".ico")
+    img = Image.open(path)
+    return img
+
+def on_quit(item):
+    icon.stop()
+    root.destroy()
+
+def flip_toggle():
+    if replace: icon.icon = create_icon("on")
+    else:       icon.icon = create_icon("off")
+
+def run_tray():
+    global icon
+
+    icon = pystray.Icon(
+        "test",
+        create_icon(),
+        "My App",
+        menu=pystray.Menu(
+            pystray.MenuItem("Flip Toggle", flip_toggle),
+            pystray.MenuItem("Quit",        on_quit)))
+    
+    icon.run()
+
+##########################################################################################################
 # Mapping
 def toggle_layout(event):
     """ Toggles application and switches between layouts. """
@@ -234,11 +271,23 @@ def toggle_layout(event):
                 current_layout = (current_layout + 1) % len(layouts)
                 show_window()
         
+        # Close application
+        elif keyboard.is_pressed('esc'):
+            root.destroy()
+            root.after(0, root.destroy)
+        
         # Toggle replacement
         else:
             replace = not replace
-            if replace: show_window()
-            else:       root.withdraw()
+            if taskbar_icon: flip_toggle()
+            if replace:      show_window()
+            else:            root.withdraw()
+    
+    # Close application
+    elif (event.event_type == 'down') and (event.name == 'esc'):
+        if keyboard.is_pressed('`'):
+            root.destroy()
+            root.after(0, root.destroy)
 
 def toggle_state(event):
     """ Switches between variants for the current layout. """
@@ -285,10 +334,10 @@ def key_replacement(event):
 def main():
     global root, layouts, label
     
-    # Data
+    # Load data
     layouts = [Layout(path) for path in _find_paths()]
     
-    # Tkinter
+    # Initialize tkinter
     root = tk.Tk()               # Create window
     label = tk.Label(root)       # Initialize photo container
     label.pack()
@@ -299,12 +348,14 @@ def main():
     place_window()               # Set window size and location
     root.after(100, move_window) # Move window when cursor hovers over it
     
-    # Mapping
+    # Initialize mapping
     keyboard.hook(key_replacement, suppress=True)
     keyboard.hook_key("`", toggle_layout, suppress=True)
+    keyboard.hook_key("esc", toggle_layout, suppress=True)
 
+    # Run loop
+    if taskbar_icon: threading.Thread(target=run_tray, daemon=True).start()
     root.mainloop()
-    input("Press Enter to exit...")
 
 if __name__ == "__main__":
     try:
