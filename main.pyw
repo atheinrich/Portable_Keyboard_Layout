@@ -26,7 +26,8 @@ import pystray                                 # Taskbar icon
 ctypes.windll.shcore.SetProcessDpiAwareness(1) # Sets image scaling
 img_width     = 535                            # Set by image size
 img_height    = 200                            # Set by image size
-lower_margin  = 100                            # Set by Windows chin
+lower_margin  = 110                            # Set by Windows chin
+upper_margin  = 10                             # Set by Windows chin
 screen_width  = 0                              # Set later
 screen_height = 0                              # Set later
 position_top  = False                          # Location of window
@@ -180,8 +181,8 @@ def move_window():
     # Find window boundary
     win_left   = (screen_width - img_width) // 2
     win_right  = win_left + img_width
-    win_bottom = 0
-    if not position_top: win_bottom += screen_height - img_height - lower_margin
+    win_bottom = upper_margin
+    if not position_top: win_bottom = screen_height - img_height - lower_margin
     win_top    = win_bottom + img_height
     
     # Check if cursor is in window
@@ -199,7 +200,7 @@ def place_window():
     screen_width  = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
     x = (screen_width - img_width) // 2
-    y = 0
+    y = upper_margin
     if not position_top: y = screen_height - img_height - lower_margin
     root.geometry(f"{img_width}x{img_height}+{x}+{y}")
 

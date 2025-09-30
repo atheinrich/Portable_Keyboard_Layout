@@ -36,9 +36,10 @@ gray_keys = [
     (3, 10), (3, 9), (3, 8)]                    # , . /
 
 key_colors = {
-    "Regular":  "#D3D3D3",                      # letters
-    "Special":  "#A9A9A9",                      # commands and numbers
-    "Selected": "#808080"}                      # layout switch
+    "Regular":   "#D3D3D3",                      # letters
+    "Highlight": "#0000FF",                      # highlight letters
+    "Special":   "#A9A9A9",                      # commands and numbers
+    "Selected":  "#808080"}                      # layout switch
 
 font              = ImageFont.truetype(r"cambria.ttc", 23, index=1)
 default_key_width = 30
@@ -51,25 +52,6 @@ col_spacing       = 5
 
 ########################################################################################################################################################
 # Definitions
-def main():
-    
-    # Load KLC file
-    klc_name = input("Enter {filename}: ") + ".klc"
-    klc_list = load_klc(klc_name)
-    
-    # Extract data
-    keys, keys_list = klc_to_ini(klc_list)
-
-    # Create ini file
-    save_ini(keys)
-    
-    # Create images
-    layout_list = make_layouts(keys_list) # 0Norm, 1Sh, 2Ctrl, 6AGr, 7AGrSh, Caps
-    print(layout_list)
-    for i in range(len(layout_list)):
-        if len(layout_list[i]) > 2:
-            make_image(layout_list[i], i)
-
 def load_klc(klc_name):
     """ Opens a KLC file as a list of lists with entries separated by tabs.
     
@@ -142,8 +124,7 @@ def klc_to_ini(klc_list):
 def save_ini(keys):
     with open(f"layout.ini", 'w', encoding='utf-8') as output:
         print("[layout]\n;scan = VK	CapStat	0Norm	1Sh	2Ctrl	6AGr	7AGrSh	Caps	CapsSh", file=output)
-        for i in range(len(keys)):
-            print(keys[i], file=output)
+        for i in range(len(keys)): print(keys[i], file=output)
 
 def make_layouts(keys_list):
     """ Formats extracted KLC data into the form given by keyboard_layout. """
@@ -163,16 +144,11 @@ def make_layouts(keys_list):
     
     # Populate layout
     for i in range(len(keys_list)):
-        if keys_list[i][0] == "SC002":   # first row (1, 2, 3, ...)
-            trigger = 0
-        elif keys_list[i][0] == "SC010": # second row (q, w, e, ...)
-            trigger = 1
-        elif keys_list[i][0] == "SC01e": # third row (a, s, d, ...)
-            trigger = 2
-        elif keys_list[i][0] == "SC02c": # fourth row (z, x, c, ...)
-            trigger = 3
-        elif keys_list[i][0] == "SC039":
-            break
+        if keys_list[i][0] == "SC002":   trigger = 0 # first row  (1, 2, 3, ...)
+        elif keys_list[i][0] == "SC010": trigger = 1 # second row (q, w, e, ...)
+        elif keys_list[i][0] == "SC01e": trigger = 2 # third row  (a, s, d, ...)
+        elif keys_list[i][0] == "SC02c": trigger = 3 # fourth row (z, x, c, ...)
+        elif keys_list[i][0] == "SC039": break
         
         # Deal with problematic keys
         if keys_list[i][0] == "SC02b":
@@ -183,40 +159,37 @@ def make_layouts(keys_list):
         
         # Append data
         for j in range(0, len(keys_list[0])-3):
-            if keys_list[i][j+3] == "--":
-                layout_list_cache[j][trigger].append("")
-            else:
-                layout_list_cache[j][trigger].append(keys_list[i][j+3])
-                
+            if keys_list[i][j+3] == "--": layout_list_cache[j][trigger].append("")
+            else:                         layout_list_cache[j][trigger].append(keys_list[i][j+3])
+    
     # Deal with problematic keys
     if SC02b:
         for i in range(0, len(keys_list[0])-3):
-            if SC02b[i+3] == "--":
-                layout_list_cache[i][1].append("")
-            else:
-                layout_list_cache[i][1].append(SC02b[i+3])
+            if SC02b[i+3] == "--": layout_list_cache[i][1].append("")
+            else:                  layout_list_cache[i][1].append(SC02b[i+3])
 
     # Fill in gaps an add special keys (ex. space, enter, ctrl, ...)
     for i in range(len(layout_list_cache)):
+        
         if abs(len(layout_list_cache[i][0]) - 14):
             layout_list_cache[i][0].insert(0, keyboard_layout[0][0])
-            for j in range(abs(len(layout_list_cache[i][0]) - 13)):
-                layout_list_cache[i][0].append('')
+            for j in range(abs(len(layout_list_cache[i][0]) - 13)): layout_list_cache[i][0].append('')
             layout_list_cache[i][0].append(keyboard_layout[0][-1])
+        
         if abs(len(layout_list_cache[i][1]) - 14):
             layout_list_cache[i][1].insert(0, keyboard_layout[1][0])
-            for j in range(abs(len(layout_list_cache[i][1]) - 14)):
-                layout_list_cache[i][1].append('')
+            for j in range(abs(len(layout_list_cache[i][1]) - 14)): layout_list_cache[i][1].append('')
+        
         if abs(len(layout_list_cache[i][2]) - 13):
             layout_list_cache[i][2].insert(0, keyboard_layout[2][0])
-            for j in range(abs(len(layout_list_cache[i][2]) - 12)):
-                layout_list_cache[i][2].append('')
+            for j in range(abs(len(layout_list_cache[i][2]) - 12)): layout_list_cache[i][2].append('')
             layout_list_cache[i][2].append(keyboard_layout[2][-1])            
+        
         if abs(len(layout_list_cache[i][3]) - 12):
             layout_list_cache[i][3].insert(0, keyboard_layout[3][0])
-            for j in range(abs(len(layout_list_cache[i][3]) - 11)):
-                layout_list_cache[i][3].append('')
+            for j in range(abs(len(layout_list_cache[i][3]) - 11)): layout_list_cache[i][3].append('')
             layout_list_cache[i][3].append(keyboard_layout[3][-1])
+            
         layout_list_cache[i][-1] = keyboard_layout[4]
     
     # Export data
@@ -246,23 +219,20 @@ def make_image(layout, index):
             
             # Determine key color by Regular or Special
             key_color = key_colors["Special"] if (row_index, key_index) in special_keys_width_by_index else key_colors["Regular"]
-            if (row_index, key_index) in special_keys_width_by_index:
-                key_color = key_colors["Special"]
-            elif (row_index == 0) or (row_index == 4):
-                key_color = key_colors["Special"]
-            elif (row_index, key_index) in gray_keys:
-                key_color = key_colors["Special"]
-            else:
-                key_color = key_colors["Regular"]
             
-            if key in special_key_names[index]:
-                key_color = key_colors["Selected"]
+            if (row_index, key_index) in special_keys_width_by_index: key_color = key_colors["Special"]
+            elif (row_index == 0) or (row_index == 4):                key_color = key_colors["Special"]
+            elif (row_index, key_index) in gray_keys:                 key_color = key_colors["Special"]
+            else:                                                     key_color = key_colors["Regular"]
+            if key in special_key_names[index]:                       key_color = key_colors["Selected"]
+            
+            if (row_index, key_index) in [(2, 4), (2, 7)]:            font_color = key_colors["Highlight"]
+            else:                                                     font_color = "black"
             
             # Fill rectangle with key color
             draw.rectangle([start_x, start_y, start_x + key_width, start_y + key_height], fill=key_color, outline="black")
             
-            if row_index == 4:
-                font = ImageFont.truetype(r"cambria.ttc", 15, index=1)
+            if row_index == 4:  font = ImageFont.truetype(r"cambria.ttc", 15, index=1)
             
             # Calculate text size and position to center it
             text_bbox = draw.textbbox((0, 0), key, font=font)
@@ -271,25 +241,31 @@ def make_image(layout, index):
             text_x = start_x + (key_width - text_width) / 2
             text_y = start_y + (key_height - text_height) / 2
             
-            draw.text((text_x, text_y), key, font=font, fill="black")
+            draw.text((text_x, text_y), key, font=font, fill=font_color)
             start_x += key_width + col_spacing
+            
         start_x = 10
         start_y += key_height + row_spacing
 
     # Save the image
-    if index == 0:
-        keyboard_image.save(f"state0.png")
-    elif index == 1:
-        keyboard_image.save(f"state1.png")
-    elif index == 2:
-        keyboard_image.save(f"state2.png") # ?
-    elif index == 3:
-        keyboard_image.save(f"state3.png")
-    elif index == 4:
-        keyboard_image.save(f"state6.png") # ?
-    elif index == 5:
-        keyboard_image.save(f"state7.png")
-    #keyboard_image.show()    
+    keyboard_image.save(f"state{index}.png")
+
+def main():
+    
+    # Load KLC file
+    klc_name = input("Enter {filename}: ") + ".klc"
+    klc_list = load_klc(klc_name)
+    
+    # Extract data
+    keys, keys_list = klc_to_ini(klc_list)
+
+    # Create ini file
+    save_ini(keys)
+    
+    # Create images
+    layout_list = make_layouts(keys_list)[:2] # 0Norm, 1Sh
+    for i in range(len(layout_list)):
+        if len(layout_list[i]) > 2: make_image(layout_list[i], i)
 
 ########################################################################################################################################################
 # Global scripts
